@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twilio Voice Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .title {
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .phone-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .phone-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .call-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .call-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .call-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .instructions {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🎧 Twilio Voice Test</h1>
+        
+        <div class="input-group">
+            <input 
+                type="tel" 
+                id="phoneNumber" 
+                class="phone-input" 
+                placeholder="Enter phone number (e.g., +1234567890)"
+                maxlength="20"
+            >
+        </div>
+        
+        <button id="callButton" class="call-button">📞 Make Test Call</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="instructions">
+            <h3>📋 How to Test Voice Calls:</h3>
+            <ul>
+                <li><strong>Enter your phone number</strong> (must be verified in Twilio Console)</li>
+                <li><strong>Click "Make Test Call"</strong> to initiate the call</li>
+                <li><strong>Answer your phone</strong> when it rings</li>
+                <li><strong>Listen to the AI assistant</strong> - you'll hear a greeting</li>
+                <li><strong>Press 1</strong> to interact with the AI</li>
+                <li><strong>Press 2</strong> to leave a voicemail</li>
+                <li><strong>Press 1 again</strong> to continue the conversation</li>
+                <li><strong>Press 2</strong> to end the call</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const phoneInput = document.getElementById('phoneNumber');
+        const callButton = document.getElementById('callButton');
+        const status = document.getElementById('status');
+
+        // Format phone number as user types
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0 && !value.startsWith('+')) {
+                value = '+' + value;
+            }
+            e.target.value = value;
+        });
+
+        callButton.addEventListener('click', async function() {
+            const phoneNumber = phoneInput.value.trim();
+            
+            if (!phoneNumber) {
+                showStatus('Please enter a phone number', 'error');
+                return;
+            }
+
+            if (!phoneNumber.startsWith('+')) {
+                showStatus('Please enter a valid phone number with country code (e.g., +1234567890)', 'error');
+                return;
+            }
+
+            try {
+                setLoading(true);
+                showStatus('Initiating call...', 'loading');
+
+                const response = await fetch('http://localhost:5000/api/call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phoneNumber })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus(`✅ Call initiated successfully! Call SID: ${data.callSid}`, 'success');
+                    showStatus(`📞 Answer your phone at ${phoneNumber} to hear the AI conversation!`, 'success');
+                } else {
+                    showStatus(`❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function setLoading(loading) {
+            callButton.disabled = loading;
+            callButton.textContent = loading ? '📞 Calling...' : '📞 Make Test Call';
+        }
+    </script>
+</body>
+</html>
