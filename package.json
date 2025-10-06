@@ -1,0 +1,38 @@
+{
+  "name": "ai-call-agent",
+  "version": "1.0.0",
+  "description": "A modern full-stack application for making AI-powered phone calls using React frontend and Node.js backend with Twilio integration",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "react",
+    "nodejs",
+    "typescript",
+    "twilio",
+    "ai",
+    "voice",
+    "calls",
+    "fullstack",
+    "express"
+  ],
+  "author": "manishnegi120491",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manishnegi120491/AIAgentCall.git"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
